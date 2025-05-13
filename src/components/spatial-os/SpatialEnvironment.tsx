@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -19,18 +20,19 @@ const SpatialEnvironment: React.FC = () => {
   const environmentRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   
+  // Initialize with a non-window-dependent, server-renderable default.
+  // The useEffect will center it properly on the client after mount.
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [panState, setPanState] = useState({ isPanning: false,startX: 0, startY: 0, initialTx: 0, initialTy: 0 });
-  const [translate, setTranslate] = useState({ x: (WORLD_WIDTH - (typeof window !== 'undefined' ? window.innerWidth : 1000)) / -2 , y: (WORLD_HEIGHT - (typeof window !== 'undefined' ? window.innerHeight : 700)) / -2 });
 
-  // Effect to center the initial view
+  // Effect to center the initial view based on window size
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setTranslate({
-        x: (WORLD_WIDTH - window.innerWidth) / -2,
-        y: (WORLD_HEIGHT - window.innerHeight) / -2
-      });
-    }
-  }, []);
+    // This runs only on the client, after the initial mount
+    setTranslate({
+      x: (WORLD_WIDTH - window.innerWidth) / -2,
+      y: (WORLD_HEIGHT - window.innerHeight) / -2
+    });
+  }, []); // Empty dependency array ensures this runs once on client mount
 
 
   const launchApp = (appId: string) => {
@@ -65,8 +67,9 @@ const SpatialEnvironment: React.FC = () => {
       instanceId: newInstanceId,
       position: { 
         // Calculate center of current viewport
-        x: Math.abs(translate.x) + (environmentRef.current ? environmentRef.current.clientWidth / 2 : 300) - (appToLaunch.defaultSize?.width ?? 600) / 2 + (Math.random() * 100 - 50),
-        y: Math.abs(translate.y) + (environmentRef.current ? environmentRef.current.clientHeight / 2 : 200) - (appToLaunch.defaultSize?.height ?? 400) / 2 + (Math.random() * 100 - 50),
+        // Ensure environmentRef.current is available, otherwise default
+        x: Math.abs(translate.x) + (environmentRef.current ? environmentRef.current.clientWidth / 2 : window.innerWidth / 2) - (appToLaunch.defaultSize?.width ?? 600) / 2 + (Math.random() * 100 - 50),
+        y: Math.abs(translate.y) + (environmentRef.current ? environmentRef.current.clientHeight / 2 : window.innerHeight / 2) - (appToLaunch.defaultSize?.height ?? 400) / 2 + (Math.random() * 100 - 50),
       },
       size: appToLaunch.defaultSize ?? { width: 600, height: 400 },
       zIndex: nextZIndex,
@@ -200,3 +203,4 @@ const SpatialEnvironment: React.FC = () => {
 };
 
 export default SpatialEnvironment;
+
